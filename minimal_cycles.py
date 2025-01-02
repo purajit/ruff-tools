@@ -2,9 +2,7 @@
 import json
 import re
 import subprocess
-
-
-PYLINT_RESULTS_FILE = "pylint-results-sorted"
+import sys
 
 
 def _path_to_module(path: str) -> str:
@@ -47,10 +45,10 @@ def _sub_cycle(c: tuple[str, ...], i: int, j: int) -> tuple[str, ...]:
     return new_cycle[start_from:] + new_cycle[0:start_from]
 
 
-def main(repo_root: str):
+def main(repo_root: str, cycle_results_file: str):
     graph = _ruff_graph_pkgs(repo_root)
 
-    with open(PYLINT_RESULTS_FILE) as f:
+    with open(cycle_results_file) as f:
         cycles = [
             tuple(line.split(" -> ")) for line in f.read().split("\n") if " -> " in line
         ]
@@ -82,6 +80,18 @@ def main(repo_root: str):
     print(len(unique_minimal_cycles))
     print(sum(len(cycle) for cycle in unique_minimal_cycles))
 
+    # print potentially most problematic edges (which show up in many cycles)
+    # breaking these edges _might_ help resolve many cycles at once
+    edge_frequencies = {}
+    for cycle in unique_minimal_cycles:
+        for i in range(len(cycle)):
+            edge = (cycle[i], cycle[(i + 1) % len(cycle)])
+            edge_frequencies.setdefault(edge, 0)
+            edge_frequencies[edge] += 1
+
+    for t in sorted(edge_frequencies.items(), key=lambda t: -t[1])[:10]:
+        print(t[1], t[0])
+
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1], sys.argv[2])
