@@ -10,21 +10,21 @@ use alloc::vec::Vec;
 use regex::Regex;
 use serde_json::Value;
 
-fn path_to_module(path: &String) -> String {
+fn path_to_module(path: &str) -> String {
     // this by no means fully PEP-compliant, and does not work for flat layouts or custom
     // package organization; it works for default src-layouts only
     let _module_path_with_extensions = path.replace("/__init__.py", "").replace("/", ".");
-    let full_module_path = Regex::new(r"\.py$")
+    let full_module_path: String = Regex::new(r"\.py$")
         .unwrap()
-        .replace(_module_path_with_extensions.as_str(), "");
-    let f = match full_module_path.find("src.") {
+        .replace(&_module_path_with_extensions, "")
+        .into();
+    return match full_module_path.find("src.") {
         Some(src_index) => {
-            let start_index = src_index + "src.".len();
+            let start_index = src_index + 4; // "src.".len()
             full_module_path[start_index..].to_string()
         }
-        None => full_module_path.to_string(),
+        None => full_module_path,
     };
-    return f;
 }
 
 /// Gives the length of a cycle if it is shortened using an edge from vertex index i to j
@@ -65,24 +65,28 @@ fn ruff_graph_pkgs(repo_root: &String) -> HashMap<String, HashSet<String>> {
         .output()
         .expect("failed to execute process");
 
-    let j: Value = serde_json::from_str(&String::from_utf8(graph_output.stdout).unwrap()).unwrap();
+    let j: Value =
+        serde_json::from_str::<Value>(str::from_utf8(&graph_output.stdout).unwrap()).unwrap();
+
     return j
         .as_object()
         .unwrap()
-        .iter()
+        .clone()
+        .into_iter()
         // once https://github.com/astral-sh/ruff/issues/13431 is implemented, we don't need
         // path_to_module anymore
         .map(|(k, v)| {
             (
-                path_to_module(k),
+                path_to_module(&k),
                 v.as_array()
                     .unwrap()
+                    .clone()
                     .iter()
-                    .map(|i| path_to_module(&i.as_str().unwrap().to_string()))
-                    .collect(),
+                    .map(|i| path_to_module(&i.as_str().unwrap()))
+                    .collect::<HashSet<_>>(),
             )
         })
-        .collect();
+        .collect::<HashMap<_, _>>();
 }
 
 pub(crate) fn minimize_cycles(repo_root: String, cycles_results_file: String) {
@@ -97,6 +101,18 @@ pub(crate) fn minimize_cycles(repo_root: String, cycles_results_file: String) {
             None => None,
         })
         .collect::<Vec<Vec<&str>>>();
+
+    println!("Pre-minimization");
+    println!("# cycles          : {}", cycles.len());
+    println!(
+        "total cycle length: {}",
+        cycles.iter().map(|c| c.len()).sum::<usize>()
+    );
+
+    println!(
+        "longest cycle     : {}",
+        cycles.iter().map(|c| c.len()).max().unwrap()
+    );
 
     // sort cycles by length, since larger cycles are likelier to be minimized, and this
     // makes it easier to grok the results and logs
@@ -115,11 +131,8 @@ pub(crate) fn minimize_cycles(repo_root: String, cycles_results_file: String) {
             for j in 0..cycle.len() {
                 if j != i
                     && j != (i + 1)
-                    && graph.contains_key(&cycle[i].to_string())
-                    && graph
-                        .get(&cycle[i].to_string())
-                        .unwrap()
-                        .contains(&cycle[j].to_string())
+                    && graph.contains_key(cycle[i])
+                    && graph.get(cycle[i]).unwrap().contains(cycle[j])
                 {
                     let proposed_cycle_size = cycle_size(cycle.len(), i, j);
                     if emsmallen.is_none() || proposed_cycle_size < emsmallen.unwrap().2 {
@@ -137,13 +150,16 @@ pub(crate) fn minimize_cycles(repo_root: String, cycles_results_file: String) {
     }
 
     // find number of unique cycles, total length of all cycles
-    let unique_minimal_cycles = minimal_cycles.into_iter().collect::<HashSet<_>>();
-    println!("{:?}", unique_minimal_cycles.len());
+    let unique_minimal_cycles = minimal_cycles.iter().collect::<HashSet<_>>();
+    println!("\nPost-minimization");
+    println!("# cycles          : {}", unique_minimal_cycles.len());
     println!(
-        "{:?}",
-        unique_minimal_cycles
-            .into_iter()
-            .map(|c| c.len())
-            .sum::<usize>()
+        "total cycle length: {}",
+        unique_minimal_cycles.iter().map(|c| c.len()).sum::<usize>()
+    );
+
+    println!(
+        "longest cycle     : {}",
+        unique_minimal_cycles.iter().map(|c| c.len()).max().unwrap()
     );
 }

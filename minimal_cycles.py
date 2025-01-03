@@ -56,6 +56,10 @@ def main(repo_root: str, cycle_results_file: str):
     # sort cycles by length, since larger cycles are likelier to be minimized, and this
     # makes it easier to grok the results and logs
     cycles = sorted(cycles, key=lambda c: len(c))
+    print("Pre-minimization")
+    print("# cycles          :", len(cycles))
+    print("total cycle length:", sum(len(cycle) for cycle in cycles))
+    print("longest cycle     :", max(len(cycle) for cycle in cycles))
 
     minimal_cycles = []
     for cycle in cycles:
@@ -77,8 +81,10 @@ def main(repo_root: str, cycle_results_file: str):
 
     # find number of unique cycles, total length of all cycles
     unique_minimal_cycles = set(minimal_cycles)
-    print(len(unique_minimal_cycles))
-    print(sum(len(cycle) for cycle in unique_minimal_cycles))
+    print("\nPost-minimization")
+    print("# cycles          :", len(unique_minimal_cycles))
+    print("total cycle length:", sum(len(cycle) for cycle in unique_minimal_cycles))
+    print("longest cycle     :", max(len(cycle) for cycle in unique_minimal_cycles))
 
     # print potentially most problematic edges (which show up in many cycles)
     # breaking these edges _might_ help resolve many cycles at once
