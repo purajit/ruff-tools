@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 pub(crate) fn detect_cycles() {
-    let graph = super::ruff_util::ruff_graph(false, false);
+    let graph = super::ruff_util::ruff_graph(false, false, None);
     let mut cycles = HashSet::new();
     for vertex in graph.keys() {
         cycles.extend(get_cycles_from_vertex(&graph, vertex));

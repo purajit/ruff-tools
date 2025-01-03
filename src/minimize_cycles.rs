@@ -63,7 +63,7 @@ pub(crate) fn minimize_cycle<'a>(
     };
 }
 pub(crate) fn minimize_cycles(cycles_results_file: String) {
-    let graph = super::ruff_util::ruff_graph(true, false);
+    let graph = super::ruff_util::ruff_graph(true, false, None);
 
     let contents =
         fs::read_to_string(cycles_results_file).expect("Should have been able to read the file");
