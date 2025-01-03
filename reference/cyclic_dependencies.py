@@ -8,6 +8,7 @@ def get_cycles(graph: dict[str, set[str]]) -> set[tuple[str, ...]]:
     """
     result: set[tuple[str, ...]] = set()
     for vertex in graph.keys():
+        print(vertex)
         result.update(_get_cycles(graph, (), set(), vertex))
     return result
 
@@ -32,9 +33,9 @@ def _get_cycles(
     cycles = set()
     path += (vertex,)
     for node in graph.get(vertex, set()):
-        # if node not in visited:
-        cycles.update(_get_cycles(graph, path, visited, node))
-        # visited.add(node)
+        if node not in visited:
+            cycles.update(_get_cycles(graph, path, visited, node))
+            visited.add(node)
 
     return cycles
 
@@ -46,8 +47,8 @@ def main():
             subprocess.check_output(["../ruff/target/debug/ruff", "analyze", "graph"])
         ).items()
     }
-    cycles = [[node] + path for node in graph for path in dfs_cycles(graph, node, node)]
-    # cycles = get_cycles(graph)
+    # cycles = [[node] + path for node in graph for path in dfs_cycles(graph, node, node)]
+    cycles = get_cycles(graph)
     for cycle in cycles:
         print(" -> ".join(cycle))
 
