@@ -1,7 +1,7 @@
 Contains a bunch of tools built on top of ruff:
 
 # Installation
-When I feel confident, I might publish this to crate.io. But for now, either download release artifacts or
+When I feel confident, I might publish this to crates.io. But for now, either download release artifacts or
 
 ``` sh
 # asdf
