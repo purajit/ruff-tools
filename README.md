@@ -1,4 +1,6 @@
-Contains a bunch of tools built on top of ruff:
+![Crates.io Version](https://img.shields.io/crates/v/ruff-tools)
+[![CI](https://github.com/purajit/ruff-tools/actions/workflows/ci.yaml/badge.svg)](https://github.com/purajit/ruff-tools/actions/workflows/ci.yaml)
+![GitHub License](https://img.shields.io/github/license/purajit/ruff-tools)
 
 # Installation
 Either download release artifacts or
