@@ -1,7 +1,7 @@
 Contains a bunch of tools built on top of ruff:
 
 # Installation
-When I feel confident, I might publish this to crate.io.
+When I feel confident, I might publish this to crate.io. But for now, either download release artifacts or
 
 ``` sh
 cargo install --git https://github.com/purajit/ruff-tools
