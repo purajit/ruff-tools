@@ -26,6 +26,7 @@ ruff-tools live --paths <files/folders to narrow affected files> -- pytest
 Example run while changing the file `src/util/bar.py`:
 
 ``` sh
+$ ruff-tools live --paths src/util -- pytest
 Constructing initial graph ...
 Listening! Ctrl-C to quit.
 Changed paths: src/util/bar.py
