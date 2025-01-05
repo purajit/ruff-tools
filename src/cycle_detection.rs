@@ -36,11 +36,8 @@ pub(crate) fn detect_cycles() {
     let mut hash_vec: Vec<_> = edge_frequencies.iter().collect();
     hash_vec.sort_by(|a, b| b.1.cmp(a.1));
     println!("Most frequently-appearing imports in cycles:");
-    for i in 0..cmp::min(hash_vec.len(), 5) {
-        println!(
-            "{} {} -> {}",
-            hash_vec[i].1, hash_vec[i].0 .0, hash_vec[i].0 .1
-        );
+    for (edge, frequency) in hash_vec.iter().take(cmp::min(hash_vec.len(), 5)) {
+        println!("{} {} -> {}", frequency, edge.0, edge.1);
     }
     println!("Removing these imports \x1b[3mmight\x1b[0m help resolve several cyclic dependencies")
 }
@@ -48,9 +45,9 @@ pub(crate) fn detect_cycles() {
 fn detect_cycles_in_graph(graph: &HashMap<String, HashSet<String>>) -> HashSet<Vec<&str>> {
     let mut cycles = HashSet::new();
     for vertex in graph.keys() {
-        cycles.extend(get_cycles_from_vertex(&graph, vertex));
+        cycles.extend(get_cycles_from_vertex(graph, vertex));
     }
-    return cycles;
+    cycles
 }
 
 /// This is ported from pylint's cycle detection which is rather chaotic,
@@ -67,12 +64,11 @@ fn get_cycles_from_vertex<'a>(
     // path, visited, node to explore
     stack.push((Vec::new(), vertex));
 
-    while !stack.is_empty() {
-        let (path, vertex) = stack.pop().unwrap();
+    while let Some((path, vertex)) = stack.pop() {
         match path.iter().position(|v| v == vertex) {
             Some(vertex_index) => {
                 cycles.insert(super::minimize_cycles::minimize_cycle(
-                    &graph,
+                    graph,
                     super::minimize_cycles::canonical_cycle(&path[vertex_index..]),
                 ));
             }

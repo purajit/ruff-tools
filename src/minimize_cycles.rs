@@ -18,15 +18,15 @@ fn cycle_size(c_len: usize, i: usize, j: usize) -> usize {
 pub(crate) fn canonical_cycle<'a>(c: &[&'a str]) -> Vec<&'a str> {
     let start_vertex = c.iter().min().unwrap();
     let start_index = c.iter().position(|v| v == start_vertex).unwrap();
-    return c[start_index..]
+    c[start_index..]
         .iter()
         .chain(&c[..start_index])
         .cloned()
-        .collect();
+        .collect()
 }
 
 /// Get the sub-cycle within c by using an edge from vertex index i to j
-fn sub_cycle<'a>(c: &Vec<&'a str>, i: usize, j: usize) -> Vec<&'a str> {
+fn sub_cycle<'a>(c: &[&'a str], i: usize, j: usize) -> Vec<&'a str> {
     let new_cycle = if i < j {
         &c[..(i + 1)]
             .iter()
@@ -37,7 +37,7 @@ fn sub_cycle<'a>(c: &Vec<&'a str>, i: usize, j: usize) -> Vec<&'a str> {
         &c[j..(i + 1)]
     };
 
-    return canonical_cycle(new_cycle);
+    canonical_cycle(new_cycle)
 }
 
 pub(crate) fn minimize_cycle<'a>(
@@ -62,10 +62,10 @@ pub(crate) fn minimize_cycle<'a>(
             }
         }
     }
-    return match emsmallen {
+    match emsmallen {
         Some((i, j, _)) => sub_cycle(&cycle, i, j),
         None => cycle,
-    };
+    }
 }
 pub(crate) fn minimize_cycles(cycles_results_file: String) {
     let graph = super::ruff_util::ruff_graph(true, false, None);
@@ -74,10 +74,7 @@ pub(crate) fn minimize_cycles(cycles_results_file: String) {
         fs::read_to_string(cycles_results_file).expect("Should have been able to read the file");
     let mut cycles = contents
         .split("\n")
-        .filter_map(|l| match l.find(" -> ") {
-            Some(_) => Some(l.split(" -> ").collect()),
-            None => None,
-        })
+        .filter_map(|l| l.find(" -> ").map(|_| l.split(" -> ").collect()))
         .collect::<Vec<Vec<&str>>>();
 
     println!("Pre-minimization");
@@ -91,13 +88,9 @@ pub(crate) fn minimize_cycles(cycles_results_file: String) {
         "longest cycle     : {}",
         cycles.iter().map(|c| c.len()).max().unwrap()
     );
-
     // sort cycles by length, since larger cycles are likelier to be minimized, and this
     // makes it easier to grok the results and logs
-    cycles.sort_by(|a, b| a.len().cmp(&b.len()));
-
-    // println!("GRAPH {:?}", graph);
-    // println!("CYCLES {:?}", cycles);
+    cycles.sort_by_key(|a| a.len());
 
     let mut minimal_cycles = Vec::<Vec<&str>>::new();
     for cycle in cycles {
@@ -106,6 +99,10 @@ pub(crate) fn minimize_cycles(cycles_results_file: String) {
 
     // find number of unique cycles, total length of all cycles
     let unique_minimal_cycles = minimal_cycles.iter().collect::<HashSet<_>>();
+    for cycle in &unique_minimal_cycles {
+        println!("{}", cycle.join(" -> "));
+    }
+
     println!("\nPost-minimization");
     println!("# cycles          : {}", unique_minimal_cycles.len());
     println!(
@@ -117,10 +114,6 @@ pub(crate) fn minimize_cycles(cycles_results_file: String) {
         "longest cycle     : {}",
         unique_minimal_cycles.iter().map(|c| c.len()).max().unwrap()
     );
-
-    for cycle in &unique_minimal_cycles {
-        println!("{}", cycle.join(" -> "));
-    }
 }
 
 #[cfg(test)]
@@ -155,23 +148,23 @@ mod tests {
     #[test]
     fn test_sub_cycle() {
         // unchanged cycle
-        assert_eq!(sub_cycle(&vec!["a", "b", "c"], 2, 0), ["a", "b", "c"]);
+        assert_eq!(sub_cycle(&["a", "b", "c"], 2, 0), ["a", "b", "c"]);
         // unchanged cycle, just canonicalized
-        assert_eq!(sub_cycle(&vec!["b", "c", "a"], 2, 0), ["a", "b", "c"]);
+        assert_eq!(sub_cycle(&["b", "c", "a"], 2, 0), ["a", "b", "c"]);
         // shortcut
-        assert_eq!(sub_cycle(&vec!["a", "b", "c"], 1, 0), ["a", "b"]);
+        assert_eq!(sub_cycle(&["a", "b", "c"], 1, 0), ["a", "b"]);
         // should shortcut
         assert_eq!(
-            sub_cycle(&vec!["b", "c", "e", "a", "d"], 2, 4),
+            sub_cycle(&["b", "c", "e", "a", "d"], 2, 4),
             ["b", "c", "e", "d"]
         );
         // should shortcut and canonicalize
         assert_eq!(
-            sub_cycle(&vec!["b", "a", "c", "e", "d"], 1, 3),
+            sub_cycle(&["b", "a", "c", "e", "d"], 1, 3),
             ["a", "e", "d", "b"]
         );
         // should get contained cycle AND canonicalize
-        assert_eq!(sub_cycle(&vec!["b", "c", "a"], 2, 1), ["a", "c"]);
+        assert_eq!(sub_cycle(&["b", "c", "a"], 2, 1), ["a", "c"]);
     }
 
     /// these have only one possible option, and just test reading edges from the graph

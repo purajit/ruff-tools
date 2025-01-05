@@ -32,7 +32,7 @@ pub(crate) fn run_watcher(
     watcher.watch(Path::new("."), RecursiveMode::Recursive)?;
     println!("\x1b[93mListening! Ctrl-C to quit.\x1b[0m");
     for res in rx {
-        let _ = match res {
+        match res {
             Ok(event) => match event.kind {
                 Modify(ModifyKind::Name(_))
                 | Modify(ModifyKind::Data(_))
@@ -58,7 +58,7 @@ pub(crate) fn run_watcher(
                             {
                                 return Some(sp.strip_prefix(&cwd).unwrap().to_string());
                             }
-                            return None;
+                            None
                         })
                         .collect::<Vec<String>>();
 
@@ -151,17 +151,17 @@ pub(crate) fn run_watcher(
     Ok(())
 }
 
-fn get_affected_files<'a>(
-    modified_files: &Vec<String>,
+fn get_affected_files(
+    modified_files: &[String],
     import_map_dependents: HashMap<String, HashSet<String>>,
 ) -> HashSet<String> {
     // run a plain BFS of the dependents graph; all visited nodes are affected files
     let mut visited: HashSet<String> = HashSet::new();
     let mut queue: VecDeque<String> = VecDeque::new();
-    visited.extend(modified_files.clone());
-    queue.extend(modified_files.clone());
+    visited.extend(modified_files.to_owned());
+    queue.extend(modified_files.to_owned());
     while let Some(file) = queue.pop_front() {
-        match import_map_dependents.get(&String::from(file)) {
+        match import_map_dependents.get(&file) {
             Some(mi) => {
                 for dependent_file in mi.iter() {
                     if visited.insert(dependent_file.clone()) {

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUSTUP_MAX_RETRIES: 10
+  PACKAGE_NAME: ruff-tools
+  PYTHON_VERSION: 3.12
+
+jobs:
+  cargo-fmt:
+    name: cargo fmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup component add rustfmt
+      - run: cargo fmt --all --check
+
+  cargo-clippy:
+    name: cargo clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup component add clippy
+      - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+  cargo-test-linux:
+    name: cargo test (linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup show
+      - run: cargo test
+      - run: cargo doc --all --no-deps --document-private-items
+        env:
+          # `cargo doc --check` isn't yet implemented (rust-lang/cargo#10025).
+          RUSTDOCFLAGS: "-D warnings"
+
+  cargo-build-release:
+    name: cargo build (release)
+    runs-on: macos-latest
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup show
+      - run: cargo build --release --locked
+
+  cargo-shear:
+    name: cargo shear
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo binstall --no-confirm cargo-shear
+      - run: cargo shear
