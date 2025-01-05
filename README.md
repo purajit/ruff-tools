@@ -36,7 +36,7 @@ where you might be able to break the most cyclic dependencies at once.
 ruff-tools detect-cycles
 ```
 
-## `inimize-cycles`
+## `minimize-cycles`
 You can also pass in the output of `pylint` after removing all your `cyclic-import`
 disables, and pass the output to `ruff-tools`, which will minimize the cycles detected
 by `pylint` using `ruff`'s graph. This currently only works for projects that use
