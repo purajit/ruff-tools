@@ -23,6 +23,46 @@ tests impacted by a change, no matter how far removed it is.
 ruff-tools live --paths <files/folders to narrow affected files> -- pytest
 ```
 
+Example run while changing the file `src/util/bar.py`:
+
+``` sh
+Constructing initial graph ...
+Listening! Ctrl-C to quit.
+Changed paths: src/util/bar.py
+Transitively affected files: src/util/tests/test_foo.py, src/util/tests/test_bar.py, src/util/baz.py, src/util/bar.py
+
+RUNNING COMMAND!
+
+========================================== test session starts ===========================================
+platform darwin -- Python 3.12.7, pytest-8.3.3, pluggy-1.5.0
+collected 22 items
+
+src/util/tests/test_foo.py ...............
+src/util/tests/test_bar.py .......
+
+-------------- generated xml file: pytest-report.xml ---------------
+=========================================== 22 passed in 0.71s ===========================================
+
+COMPLETED RUN!
+
+Changed paths: src/util/bar.py
+Transitively affected files: src/util/tests/test_bar.py, src/util/tests/test_foo.py, src/util/bar.py, src/util/foo.py
+
+RUNNING COMMAND!
+
+========================================== test session starts ===========================================
+platform darwin -- Python 3.12.7, pytest-8.3.3, pluggy-1.5.0
+collected 22 items
+
+src/util/tests/test_bar.py .......
+src/util/tests/test_foo.py ...............
+
+-------------- generated xml file: pytest-report.xml ---------------
+=========================================== 22 passed in 0.68s ===========================================
+
+COMPLETED RUN!
+```
+
 ## `detect-cycles`
 This will not only detect cycles (currently using the same algorithm as pylint,
 but stay tuned for improvements), but also _minimize_ and unique-ify them. As an
