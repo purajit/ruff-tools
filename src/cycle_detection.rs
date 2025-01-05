@@ -69,7 +69,7 @@ fn get_cycles_from_vertex<'a>(
             Some(vertex_index) => {
                 cycles.insert(super::minimize_cycles::minimize_cycle(
                     graph,
-                    super::minimize_cycles::canonical_cycle(&path[vertex_index..]),
+                    &super::minimize_cycles::canonical_cycle(&path[vertex_index..]),
                 ));
             }
             None => {

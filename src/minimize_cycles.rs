@@ -42,7 +42,7 @@ fn sub_cycle<'a>(c: &[&'a str], i: usize, j: usize) -> Vec<&'a str> {
 
 pub(crate) fn minimize_cycle<'a>(
     graph: &HashMap<String, HashSet<String>>,
-    cycle: Vec<&'a str>,
+    cycle: &[&'a str],
 ) -> Vec<&'a str> {
     // all the None cases can be simplified with a base case of
     // embiggen = (-1, 0, cycle.len())
@@ -63,8 +63,8 @@ pub(crate) fn minimize_cycle<'a>(
         }
     }
     match emsmallen {
-        Some((i, j, _)) => sub_cycle(&cycle, i, j),
-        None => cycle,
+        Some((i, j, _)) => sub_cycle(cycle, i, j),
+        None => cycle.to_vec(),
     }
 }
 pub(crate) fn minimize_cycles(cycles_results_file: String) {
@@ -74,26 +74,28 @@ pub(crate) fn minimize_cycles(cycles_results_file: String) {
         fs::read_to_string(cycles_results_file).expect("Should have been able to read the file");
     let mut cycles = contents
         .split("\n")
-        .filter_map(|l| l.find(" -> ").map(|_| l.split(" -> ").collect()))
+        .filter_map(|l| {
+            // pylint's format is
+            // file_name:lno:cno: R0401: Cyclic import(<cycle details>) (cyclic-import)
+            l.find(" -> ").map(|_| {
+                l.split("(")
+                    .nth(1)
+                    .unwrap()
+                    .split(")")
+                    .next()
+                    .unwrap()
+                    .split(" -> ")
+                    .collect()
+            })
+        })
         .collect::<Vec<Vec<&str>>>();
 
-    println!("Pre-minimization");
-    println!("# cycles          : {}", cycles.len());
-    println!(
-        "total cycle length: {}",
-        cycles.iter().map(|c| c.len()).sum::<usize>()
-    );
-
-    println!(
-        "longest cycle     : {}",
-        cycles.iter().map(|c| c.len()).max().unwrap()
-    );
     // sort cycles by length, since larger cycles are likelier to be minimized, and this
     // makes it easier to grok the results and logs
     cycles.sort_by_key(|a| a.len());
 
     let mut minimal_cycles = Vec::<Vec<&str>>::new();
-    for cycle in cycles {
+    for cycle in &cycles {
         minimal_cycles.push(minimize_cycle(&graph, cycle));
     }
 
@@ -103,7 +105,19 @@ pub(crate) fn minimize_cycles(cycles_results_file: String) {
         println!("{}", cycle.join(" -> "));
     }
 
-    println!("\nPost-minimization");
+    println!();
+    println!("Pre-minimization");
+    println!("# cycles          : {}", cycles.len());
+    println!(
+        "total cycle length: {}",
+        cycles.iter().map(|c| c.len()).sum::<usize>()
+    );
+    println!(
+        "longest cycle     : {}",
+        cycles.iter().map(|c| c.len()).max().unwrap()
+    );
+    println!();
+    println!("Post-minimization");
     println!("# cycles          : {}", unique_minimal_cycles.len());
     println!(
         "total cycle length: {}",
@@ -172,16 +186,16 @@ mod tests {
     fn test_minimize_cycle_simple() {
         let graph = HashMap::from([("b".to_string(), HashSet::from(["a".to_string()]))]);
         // unchanged cycle
-        assert_eq!(minimize_cycle(&graph, vec!["j", "k", "l"]), ["j", "k", "l"]);
-        assert_eq!(minimize_cycle(&graph, vec!["a", "j", "b"]), ["a", "j", "b"]);
+        assert_eq!(minimize_cycle(&graph, &["j", "k", "l"]), ["j", "k", "l"]);
+        assert_eq!(minimize_cycle(&graph, &["a", "j", "b"]), ["a", "j", "b"]);
         // should shortcut
-        assert_eq!(minimize_cycle(&graph, vec!["a", "b", "c"]), ["a", "b"]);
+        assert_eq!(minimize_cycle(&graph, &["a", "b", "c"]), ["a", "b"]);
         assert_eq!(
-            minimize_cycle(&graph, vec!["b", "c", "e", "a", "d"]),
+            minimize_cycle(&graph, &["b", "c", "e", "a", "d"]),
             ["a", "d", "b"]
         );
         // should get contained cycle
-        assert_eq!(minimize_cycle(&graph, vec!["c", "a", "b", "d"]), ["a", "b"]);
+        assert_eq!(minimize_cycle(&graph, &["c", "a", "b", "d"]), ["a", "b"]);
 
         // these have multiple options, and should find the best one
     }
@@ -201,32 +215,32 @@ mod tests {
         ]);
         // three shortcuts: j -> a (cuts 3), b -> a (cuts 1)
         assert_eq!(
-            minimize_cycle(&graph, vec!["a", "j", "k", "b", "l"]),
+            minimize_cycle(&graph, &["a", "j", "k", "b", "l"]),
             ["a", "j"]
         );
         // two shortcuts: k -> j (cuts 1), n -> l (cuts 2)
         assert_eq!(
-            minimize_cycle(&graph, vec!["a", "k", "m", "n", "b1", "b2", "l"]),
+            minimize_cycle(&graph, &["a", "k", "m", "n", "b1", "b2", "l"]),
             ["a", "k", "m", "n", "l"]
         );
         // two contained cycles: l -> r -> j, and a -> b
         assert_eq!(
-            minimize_cycle(&graph, vec!["q", "d", "l", "r", "j", "a", "b"]),
+            minimize_cycle(&graph, &["q", "d", "l", "r", "j", "a", "b"]),
             ["a", "b"]
         );
         // two contained cycles: l -> j, and a -> r -> b
         assert_eq!(
-            minimize_cycle(&graph, vec!["q", "d", "l", "j", "a", "r", "b"]),
+            minimize_cycle(&graph, &["q", "d", "l", "j", "a", "r", "b"]),
             ["j", "l"]
         );
         // one shortcut: q -> a (cuts 6), one contained cycle: l -> l1 -> l2 -> j (cuts 2)
         assert_eq!(
-            minimize_cycle(&graph, vec!["a", "q", "b", "l", "l1", "l2", "j"]),
+            minimize_cycle(&graph, &["a", "q", "b", "l", "l1", "l2", "j"]),
             ["a", "q", "b"]
         );
         // one shortcut: q -> a (cuts 3), one contained cycle: l -> l1 -> j (cuts 4)
         assert_eq!(
-            minimize_cycle(&graph, vec!["a", "q1", "q", "b", "l", "l1", "j"]),
+            minimize_cycle(&graph, &["a", "q1", "q", "b", "l", "l1", "j"]),
             ["j", "l", "l1"]
         );
     }
