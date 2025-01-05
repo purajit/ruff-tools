@@ -27,16 +27,7 @@ MODULE_REGEX = "[a-zA-Z0-9_]+"
 MODULE_PATH_REGEX = rf"({MODULE_REGEX}\.)*{MODULE_REGEX}"
 
 
-class Violation(TypedDict):
-    module_name: str
-
-
-class Layer(TypedDict):
-    modules: list[str]
-    allow_intra_layer_imports: bool
-
-
-# doesn't fully implement python packaging rules, but works for what we have
+# doesn't fully implement python packaging rules, but works for standard src-layouts
 def path_to_module(path: str) -> str:
     path = path.replace("/__init__.py", "").replace("/", ".")
     path = re.sub(r"\.py$", "", path)
