@@ -76,3 +76,15 @@ fn path_to_module(path: &str) -> String {
         None => full_module_path,
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_path_to_module() {
+        assert_eq!(path_to_module("foo/src/foo/bar.py"), "foo.bar");
+        assert_eq!(path_to_module("foo/src/foo/bar/__init__.py"), "foo.bar");
+        assert_eq!(path_to_module("foo/src/foo/__init__.py"), "foo");
+    }
+}
