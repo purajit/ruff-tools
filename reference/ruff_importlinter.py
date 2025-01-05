@@ -12,11 +12,16 @@ from importlinter.application.use_cases import (
     _filter_contract_options,
     _register_contract_types,
 )
+from importlinter.application.rendering import render_contract_result_line
 from importlinter.domain.contract import registry
 
 logger = logging.getLogger()
 
 CONTRACT_KEY_PREFIX = "importlinter:contract:"
+
+RED = "\033[91m"
+GREEN = "\033[92m"
+NC = "\033[0m"
 
 MODULE_REGEX = "[a-zA-Z0-9_]+"
 MODULE_PATH_REGEX = rf"({MODULE_REGEX}\.)*{MODULE_REGEX}"
@@ -53,9 +58,16 @@ def _run_checks(import_graph) -> None:
             contract_options=contract_options,
         )
 
-        print(f"Checking {contract.name}...")
+        print(f"Checking {contract.name}... ", end="")
         check = contract.check(deepcopy(import_graph), verbose=False)
-        print(sum(len(m["chains"]) for m in check.metadata.get("invalid_chains", [])))
+        num_violating_import = sum(
+            len(m["chains"]) for m in check.metadata.get("invalid_chains", [])
+        )
+        if num_violating_import:
+            print(f"{RED}BROKEN{NC}! Found {num_violating_import} violating imports")
+            contract.render_broken_contract(check)
+        else:
+            print(f"{GREEN}KEPT{NC}!")
 
 
 def _ignore_imports_to_regex(ignore_rules: list[str]) -> list[str]:
@@ -66,15 +78,19 @@ def _ignore_imports_to_regex(ignore_rules: list[str]) -> list[str]:
 
 
 def main() -> int:
+    print("Loading configuration...", end="")
     from importlinter.configuration import configure
 
     configure()
+    print(f"{GREEN}DONE!{NC}")
+    print("Building import graph...", end="")
     dependency_graph = {
         path_to_module(k): set({path_to_module(m) for m in v})
         for k, v in json.loads(
             subprocess.check_output(["ruff", "analyze", "graph", "--preview"])
         ).items()
     }
+    print(f"{GREEN}DONE!{NC}")
 
     import_graph = ImportGraph()
 
@@ -82,7 +98,13 @@ def main() -> int:
         import_graph.add_module(module)
         for dep in deps:
             import_graph.add_module(dep)
-            import_graph.add_import(importer=module, imported=dep)
+            import_graph.add_import(
+                importer=module,
+                imported=dep,
+                line_number=1,
+                line_contents="placeholder",
+            )
+
     _run_checks(import_graph)
 
 
