@@ -6,13 +6,22 @@ use std::str;
 
 use serde_json::Value;
 
-pub(crate) fn ruff_graph(as_pkgs: bool, as_dependents: bool) -> HashMap<String, HashSet<String>> {
+pub(crate) fn ruff_graph(
+    as_pkgs: bool,
+    as_dependents: bool,
+    paths: Option<Vec<String>>,
+) -> HashMap<String, HashSet<String>> {
     let graph_output = Command::new("ruff")
         .args(["analyze", "graph", "--preview"])
         .args(if as_dependents {
-            vec![]
+            Vec::<&str>::new()
         } else {
             vec!["--direction", "dependents"]
+        })
+        .args(if paths.is_some() {
+            paths.unwrap()
+        } else {
+            Vec::<String>::new()
         })
         .output()
         .expect("failed to execute process");
