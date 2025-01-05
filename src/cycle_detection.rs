@@ -1,5 +1,6 @@
 extern crate alloc;
 
+use std::cmp;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -9,7 +10,39 @@ pub(crate) fn detect_cycles() {
     for cycle in &cycles {
         println!("{}", cycle.join(" -> "));
     }
-    println!("{}", cycles.len())
+    println!();
+    println!("Summary:");
+    println!("# cycles          : {}", cycles.len());
+    println!(
+        "total cycle length: {}",
+        cycles.iter().map(|c| c.len()).sum::<usize>()
+    );
+
+    println!(
+        "longest cycle     : {}",
+        cycles.iter().map(|c| c.len()).max().unwrap()
+    );
+
+    // print potentially most problematic edges (which show up in many cycles)
+    // breaking these edges _might_ help resolve many cycles at once
+    let mut edge_frequencies: HashMap<(&str, &str), u32> = HashMap::new();
+    for cycle in cycles {
+        for i in 0..cycle.len() {
+            let edge = (cycle[i], cycle[(i + 1) % cycle.len()]);
+            *edge_frequencies.entry(edge).or_default() += 1;
+        }
+    }
+
+    let mut hash_vec: Vec<_> = edge_frequencies.iter().collect();
+    hash_vec.sort_by(|a, b| b.1.cmp(a.1));
+    println!("Most frequently-appearing imports in cycles:");
+    for i in 0..cmp::min(hash_vec.len(), 5) {
+        println!(
+            "{} {} -> {}",
+            hash_vec[i].1, hash_vec[i].0 .0, hash_vec[i].0 .1
+        );
+    }
+    println!("Removing these imports \x1b[3mmight\x1b[0m help resolve several cyclic dependencies")
 }
 
 fn detect_cycles_in_graph(graph: &HashMap<String, HashSet<String>>) -> HashSet<Vec<&str>> {

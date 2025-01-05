@@ -131,17 +131,17 @@ pub(crate) fn run_watcher(
                     }
 
                     println!("Transitively affected files: {}", affected_files.join(", "));
-                    println!("");
+                    println!();
                     println!("\x1b[93mRUNNING COMMAND!\x1b[0m");
-                    println!("");
+                    println!();
                     Command::new(cmd_name)
                         .args(cmd_args)
                         .args(affected_files)
                         .status()
                         .expect("failed to execute process");
-                    println!("");
+                    println!();
                     println!("\x1b[93mCOMPLETED RUN!\x1b[0m");
-                    println!("");
+                    println!();
                 }
                 _ => continue,
             },
