@@ -18,19 +18,14 @@ pub(crate) fn ruff_graph(
         } else {
             vec!["--direction", "dependents"]
         })
-        .args(if paths.is_some() {
-            paths.unwrap()
-        } else {
-            Vec::<String>::new()
-        })
+        .args(paths.unwrap_or_default())
         .output()
         .expect("failed to execute process");
 
     let j: Value =
         serde_json::from_str::<Value>(str::from_utf8(&graph_output.stdout).unwrap()).unwrap();
 
-    return j
-        .as_object()
+    j.as_object()
         .unwrap()
         .clone()
         .into_iter()
@@ -42,8 +37,8 @@ pub(crate) fn ruff_graph(
                     path_to_module(&k),
                     v.as_array()
                         .unwrap()
-                        .into_iter()
-                        .map(|i| path_to_module(&i.as_str().unwrap()))
+                        .iter()
+                        .map(|i| path_to_module(i.as_str().unwrap()))
                         .collect::<HashSet<_>>(),
                 )
             } else {
@@ -51,13 +46,13 @@ pub(crate) fn ruff_graph(
                     k,
                     v.as_array()
                         .unwrap()
-                        .into_iter()
+                        .iter()
                         .map(|i| i.as_str().unwrap().to_string())
                         .collect::<HashSet<_>>(),
                 )
             }
         })
-        .collect::<HashMap<_, _>>();
+        .collect::<HashMap<_, _>>()
 }
 
 fn path_to_module(path: &str) -> String {
@@ -68,13 +63,13 @@ fn path_to_module(path: &str) -> String {
         .unwrap()
         .replace(&_module_path_with_extensions, "")
         .into();
-    return match full_module_path.find("src.") {
+    match full_module_path.find("src.") {
         Some(src_index) => {
             let start_index = src_index + 4; // "src.".len()
             full_module_path[start_index..].to_string()
         }
         None => full_module_path,
-    };
+    }
 }
 
 #[cfg(test)]

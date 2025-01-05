@@ -43,7 +43,6 @@ fn main() {
         RuffTools::CycleDetection(_) => cycle_detection::detect_cycles(),
         RuffTools::Live(cmd) => {
             let _ = live::run_watcher(cmd.cmd, cmd.paths);
-            ()
         }
         _ => (),
     }
