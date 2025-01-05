@@ -4,6 +4,11 @@ Contains a bunch of tools built on top of ruff:
 When I feel confident, I might publish this to crate.io. But for now, either download release artifacts or
 
 ``` sh
+# asdf
+asdf plugin add ruff-tools https://github.com/purajit/asdf-ruff-tools.git
+asdf install ruff-tools 0.1.0
+
+# cargo
 cargo install --git https://github.com/purajit/ruff-tools
 ```
 
