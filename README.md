@@ -29,6 +29,8 @@ but stay tuned for improvements), but also _minimize_ and unique-ify them. As an
 example, in a very large repo, pylint detected ~2000 cycles with a total of ~94,000
 edges with the longest cycle being 100 nodes, while `ruff-tools` reduced that down
 to ~100 cycles with a total of ~500 edges, and the longest cycle being 18 in length.
+It will also find the most common edges in the cycles, which could indicate places
+where you might be able to break the most cyclic dependencies at once.
 
 ``` sh
 ruff-tools detect-cycles
@@ -38,7 +40,7 @@ ruff-tools detect-cycles
 You can also pass in the output of `pylint` after removing all your `cyclic-import`
 disables, and pass the output to `ruff-tools`, which will minimize the cycles detected
 by `pylint` using `ruff`'s graph. This currently only works for projects that use
-standard src-layout
+standard src-layout.
 
 ``` sh
 ruff-tools minimize-cycles --cycle-results-file <cycle-results-file>
