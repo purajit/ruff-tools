@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: rustup component add rustfmt
       - run: cargo fmt --all --check
 
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: rustup component add clippy
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: rustup show
       - run: cargo test
       - run: cargo doc --all --no-deps --document-private-items
@@ -56,7 +56,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: rustup show
       - run: cargo build --release --locked
 
@@ -64,7 +64,7 @@ jobs:
     name: cargo shear
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: cargo-bins/cargo-binstall@main
       - run: cargo binstall --no-confirm cargo-shear
       - run: cargo shear
