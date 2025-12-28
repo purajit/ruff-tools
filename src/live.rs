@@ -84,8 +84,8 @@ pub(crate) fn run_watcher(
                             let old_dependencies = import_map_dependencies
                                 .insert(path.clone(), new_dependencies.clone());
                             // handle removed edges
-                            if old_dependencies.is_some() {
-                                for m in old_dependencies.unwrap().difference(new_dependencies) {
+                            if let Some(old_dependencies) = old_dependencies {
+                                for m in old_dependencies.difference(new_dependencies) {
                                     if import_map_dependents.contains_key(m) {
                                         import_map_dependents.entry(m.clone()).and_modify(|curr| {
                                             curr.remove(path);
@@ -115,8 +115,8 @@ pub(crate) fn run_watcher(
                         for p in changed_paths.into_iter() {
                             let _ = import_map_dependents.remove(&p);
                             let old_dependencies = import_map_dependencies.remove(&p);
-                            if old_dependencies.is_some() {
-                                for m in old_dependencies.unwrap().iter() {
+                            if let Some(old_dependencies) = old_dependencies {
+                                for m in old_dependencies.iter() {
                                     import_map_dependents.entry(m.clone()).and_modify(|curr| {
                                         curr.remove(&p);
                                     });
