@@ -22,3 +22,8 @@ install-path = "CARGO_HOME"
 # publish-jobs = ["homebrew"]
 # Whether to install an updater program
 install-updater = false
+
+[dist.github-action-commits]
+"actions/checkout" = "v6"
+"actions/upload-artifact" = "v6"
+"actions/download-artifact" = "v7"
